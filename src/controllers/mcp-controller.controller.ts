@@ -18,7 +18,7 @@ export class McpController {
     passReqToCallback: true,
   })
   @authorize({
-    permissions: ['*'],
+    permissions: ['mcp.access'],
   })
   @post('/mcp', {
     summary: 'MCP HTTP Message',

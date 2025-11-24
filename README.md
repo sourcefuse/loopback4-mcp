@@ -20,7 +20,7 @@ Its purpose is to enable LoopBack APIs, services, and business logic to be expos
 
 - Lifecycle-managed Tool Registry :-
   A dedicated `McpToolRegistry` service maintains all discovered tool metadata,their handlers and execution context.
-  
+
   A `McpToolRegistryBootObserver` ensures that registration happens only after the application has fully booted.
 ## Installation
 ```sh
@@ -45,8 +45,14 @@ async createUser(args: {email: string; name: string}) {
   return {message: `User ${args.name} created`};
 }
 ```
+
+This decorator accepts a total of five fields, out of which `name` and `description` are mandatory and `schema`,`preHook` and `postHook` are optional enhancements.
+
+The schema field allows defining a Zod-based validation schema for tool input parameters, while preHook and postHook enable execution of custom logic before and after the tool handler runs.
+
 ### Mcp Hook Usage Details
   To use hooks with MCP tools, follow the provider-based approach:
+
   Step 1: Create a hook provider:
   ```typescript
   // src/providers/my-hook.provider.ts
