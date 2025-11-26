@@ -1,10 +1,11 @@
-import {inject, service} from '@loopback/core';
+import {inject, intercept, service} from '@loopback/core';
 import {post, Request, Response, RestBindings} from '@loopback/rest';
 import {StreamableHTTPServerTransport} from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import {CONTENT_TYPE, ILogger, LOGGER, STATUS_CODE} from '@sourceloop/core';
 import {authenticate, STRATEGY} from 'loopback4-authentication';
 import {authorize} from 'loopback4-authorization';
 import {McpServerFactory} from '../services';
+import {McpBindings} from '../keys';
 
 export class McpController {
   constructor(
@@ -18,8 +19,9 @@ export class McpController {
     passReqToCallback: true,
   })
   @authorize({
-    permissions: ['mcp.access'],
+    permissions: ['*'],
   })
+  @intercept(McpBindings.ACCESS_INTERCEPTOR)
   @post('/mcp', {
     summary: 'MCP HTTP Message',
     description: 'Handle MCP message via StreamableHTTP transport',

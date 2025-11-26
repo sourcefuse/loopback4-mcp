@@ -105,7 +105,14 @@
         }
       ],
       "@semantic-release/release-notes-generator",
-      "@semantic-release/npm",
+      [
+        "@semantic-release/npm",
+        {
+          "npmPublish": true,
+          "pkgRoot": ".",
+          "tarballDir": "dist"
+        }
+      ],
       [
         "@semantic-release/git",
         {
@@ -118,6 +125,6 @@
       ],
       "@semantic-release/github"
     ],
-    "repositoryUrl": "git@github.com:sourcefuse/loopback4-mcp.git"
+    "repositoryUrl": "https://github.com/sourcefuse/loopback4-mcp.git"
   }
 }
