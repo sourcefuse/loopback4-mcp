@@ -1,1 +1,1 @@
-export * from './mcp-controller.controller';
+export * from './mcp.controller';

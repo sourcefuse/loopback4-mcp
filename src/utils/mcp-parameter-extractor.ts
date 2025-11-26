@@ -36,10 +36,9 @@ export function extractParameterInfo(target: Object, propertyKey: string) {
     },
   );
 
-  const parameterOptional = paramMetadata.map((param: ParameterObject) => {
-    // Check if parameter is required (required: false means optional)
-    return param.required === false;
-  });
+  const parameterOptional = paramMetadata.map(
+    (param: ParameterObject) => param.required === false,
+  );
 
   const parameterTypes = paramMetadata.map((param: ParameterObject) => {
     // Extract type information from LoopBack parameter schema

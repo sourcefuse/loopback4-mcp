@@ -1,1 +1,1 @@
-export namespace McpComponentBindings {}
+export namespace McpBindings {}

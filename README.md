@@ -54,7 +54,7 @@ The schema field allows defining a Zod-based validation schema for tool input pa
   To use hooks with MCP tools, follow the provider-based approach:
 
   Step 1: Create a hook provider:
-  ```typescript
+  ```ts
   // src/providers/my-hook.provider.ts
   export class MyHookProvider implements Provider<McpHookFunction> {
     constructor(@inject(LOGGER.LOGGER_INJECT) private logger: ILogger) {}
@@ -66,7 +66,7 @@ The schema field allows defining a Zod-based validation schema for tool input pa
  }
   ```
   Step 2: Add binding key to McpHookBindings:
-  ```typescript
+  ```ts
   // src/keys.ts
   export namespace McpHookBindings {
     export const MY_HOOK = BindingKey.create<McpHookFunction>('hooks.mcp.myHook');
@@ -77,10 +77,11 @@ The schema field allows defining a Zod-based validation schema for tool input pa
   this.bind(McpHookBindings.MY_HOOK).toProvider(MyHookProvider);
  ```
   Step 4: Use in decorator:
-  ```typescript
+  ```ts
   @mcpTool({
    name: 'my-tool',
    description: 'my-description'
    preHookBinding: McpHookBindings.MY_HOOK,
     postHookBinding: 'hooks.mcp.myOtherHook' // or string binding key
   })
+  ```

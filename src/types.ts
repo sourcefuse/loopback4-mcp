@@ -8,48 +8,6 @@ import {
 import {ZodRawShape} from 'zod';
 import {McpHookFunction} from './interfaces';
 
-/**
- * MCP Tool Hook Usage Guide:
- *
- * To use hooks with MCP tools, follow the provider-based approach:
- *
- * Step 1: Create a hook provider:
- * ```typescript
- * // src/providers/my-hook.provider.ts
- * export class MyHookProvider implements Provider<McpHookFunction> {
- *   constructor(@inject(LOGGER.LOGGER_INJECT) private logger: ILogger) {}
- *
- *   value(): McpHookFunction {
- *     return async (context: McpHookContext) => {
- *       this.logger.info(`Hook executed for tool: ${context.toolName}`);
- *     };
- *   }
- * }
- * ```
- *
- * Step 2: Add binding key to McpHookBindings:
- * ```typescript
- * // src/keys.ts
- * export namespace McpHookBindings {
- *   export const MY_HOOK = BindingKey.create<McpHookFunction>('hooks.mcp.myHook');
- * }
- * ```
- *
- * Step 3: Bind provider in application.ts:
- * ```typescript
- * this.bind(McpHookBindings.MY_HOOK).toProvider(MyHookProvider);
- * ```
- *
- * Step 4: Use in decorator:
- * ```typescript
- * @mcpTool({
- *   name: 'my-tool',
- *   preHookBinding: McpHookBindings.MY_HOOK,
- *   postHookBinding: 'hooks.mcp.myOtherHook' // or string binding key
- * })
- * ```
- */
-
 export type McpToolHandler = (
   ctx: Context,
   args: {[key: string]: unknown},
