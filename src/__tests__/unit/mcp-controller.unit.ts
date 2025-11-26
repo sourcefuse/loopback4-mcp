@@ -3,34 +3,23 @@ import {
   sinon,
   StubbedInstanceWithSinonAccessor,
 } from '@loopback/testlab';
-
 import {Request, Response} from '@loopback/rest';
-
 import {McpServerFactory} from '../../services';
-
 import {ILogger, STATUS_CODE} from '@sourceloop/core';
-
 import {Server} from '@modelcontextprotocol/sdk/server/index.js';
-
 import {StreamableHTTPServerTransport} from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-
 import {McpController} from '../../controllers';
 
 describe('McpController (unit)', () => {
   let controller: McpController;
-
   let logger: StubbedInstanceWithSinonAccessor<ILogger>;
-
   let serverFactory: StubbedInstanceWithSinonAccessor<McpServerFactory>;
-
   let mockServer: sinon.SinonStubbedInstance<Server>;
-
   let mockTransport: sinon.SinonStubbedInstance<StreamableHTTPServerTransport>;
-
   let req: Request;
-
   let res: sinon.SinonStubbedInstance<Response>;
   let handlers: {[key: string]: Function[]};
+  const MCP_ERROR_LOG = 'Failed to establish MCP connection:';
 
   beforeEach(() => {
     // Mock logger
@@ -103,13 +92,9 @@ describe('McpController (unit)', () => {
       await controller.handleMCPRequest(req, res);
 
       sinon.assert.calledOnce(serverFactory.createServer as sinon.SinonStub);
-
       sinon.assert.calledOnce(mockServer.connect);
-
       sinon.assert.calledWith(mockTransport.handleRequest, req, res, req.body);
-
       sinon.assert.calledTwice(res.on as sinon.SinonStub);
-
       sinon.assert.calledWith(
         res.on as sinon.SinonStub,
         'close',
@@ -143,13 +128,12 @@ describe('McpController (unit)', () => {
       expect(closeHandler).to.not.be.undefined();
 
       // Trigger close event
-
-      await closeHandler!();
+      if (closeHandler) {
+        await closeHandler();
+      }
 
       sinon.assert.calledOnce(mockTransport.close);
-
       sinon.assert.calledOnce(mockServer.close);
-
       sinon.assert.calledWith(
         logger.info as sinon.SinonStub,
         'Session closed.',
@@ -170,17 +154,15 @@ describe('McpController (unit)', () => {
       );
 
       await controller.handleMCPRequest(req, res);
-
       expect(errorHandler).to.not.be.undefined();
 
       // Trigger error event
-
-      await errorHandler!();
+      if (errorHandler) {
+        await errorHandler();
+      }
 
       sinon.assert.calledOnce(mockTransport.close);
-
       sinon.assert.calledOnce(mockServer.close);
-
       sinon.assert.calledWith(
         logger.info as sinon.SinonStub,
         'Closing Session as it errorred out.',
@@ -196,9 +178,7 @@ describe('McpController (unit)', () => {
 
       sinon.assert.calledWith(
         logger.error as sinon.SinonStub,
-
-        'Failed to establish MCP connection:',
-
+        MCP_ERROR_LOG,
         error,
       );
 
@@ -229,9 +209,7 @@ describe('McpController (unit)', () => {
 
       sinon.assert.calledWith(
         logger.error as sinon.SinonStub,
-
-        'Failed to establish MCP connection:',
-
+        MCP_ERROR_LOG,
         error,
       );
 
@@ -257,21 +235,16 @@ describe('McpController (unit)', () => {
       const error = new Error('Transport error');
 
       mockTransport.handleRequest.rejects(error);
-
       res.headersSent = true;
-
       await controller.handleMCPRequest(req, res);
 
       sinon.assert.calledWith(
         logger.error as sinon.SinonStub,
-
-        'Failed to establish MCP connection:',
-
+        MCP_ERROR_LOG,
         error,
       );
 
       sinon.assert.notCalled(res.status as sinon.SinonStub);
-
       sinon.assert.notCalled(res.json as sinon.SinonStub);
     });
   });

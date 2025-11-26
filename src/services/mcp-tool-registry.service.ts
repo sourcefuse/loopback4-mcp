@@ -185,20 +185,6 @@ export class McpToolRegistry {
   }
 
   /**
-   * Get count of registered tools
-   */
-  getToolCount(): number {
-    return this.toolDefinitions.length;
-  }
-
-  /**
-   * Check if registry is initialized
-   */
-  isReady(): boolean {
-    return this.isInitialized;
-  }
-
-  /**
    * Resolve hook function from provider binding
    */
   private async resolveHook(
@@ -325,14 +311,22 @@ export class McpToolRegistry {
     tool: McpToolMetadata,
     hookContext: McpHookContext,
   ): Promise<void> {
-    const postHook = await this.resolveHook(ctx, tool.postHook?.binding);
-    if (postHook) {
-      const postHookResult = await postHook(hookContext);
-      if (postHookResult) {
-        hookContext.result = postHookResult.result;
-        hookContext.args = postHookResult.args;
-        hookContext.error = postHookResult.error;
+    try {
+      const postHook = await this.resolveHook(ctx, tool.postHook?.binding);
+      if (postHook) {
+        const postHookResult = await postHook(hookContext);
+        if (postHookResult) {
+          hookContext.result = postHookResult.result;
+          hookContext.args = postHookResult.args;
+          hookContext.error = postHookResult.error;
+        }
       }
+    } catch (postHookError) {
+      // Log post-hook failure but don't throw - preserve original result/error
+      this.logger.error(
+        `Post-hook failed for MCP tool '${tool.name}':`,
+        postHookError,
+      );
     }
   }
 
