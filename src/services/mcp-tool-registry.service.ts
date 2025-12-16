@@ -141,7 +141,6 @@ export class McpToolRegistry {
               args: args,
               metadata: tool.postHook?.config,
             };
-
             await this.executePreHook(ctx, tool, hookContext);
 
             let result;
@@ -154,6 +153,8 @@ export class McpToolRegistry {
                 extras,
               );
               hookContext.result = result;
+
+              await this.executePostHook(ctx, tool, hookContext);
             } catch (err) {
               const error = err instanceof Error ? err : new Error(String(err));
               hookContext.error = error;
@@ -161,12 +162,10 @@ export class McpToolRegistry {
                 `MCP Tool '${tool.name}' execution failed:`,
                 error.message,
               );
-              throw error;
+              return this.errorToCallToolResult(error);
             } finally {
-              await this.executePostHook(ctx, tool, hookContext);
               ctx.close();
             }
-
             return (hookContext.result as CallToolResult) ?? result;
           },
         };
@@ -311,22 +310,14 @@ export class McpToolRegistry {
     tool: McpToolMetadata,
     hookContext: McpHookContext,
   ): Promise<void> {
-    try {
-      const postHook = await this.resolveHook(ctx, tool.postHook?.binding);
-      if (postHook) {
-        const postHookResult = await postHook(hookContext);
-        if (postHookResult) {
-          hookContext.result = postHookResult.result;
-          hookContext.args = postHookResult.args;
-          hookContext.error = postHookResult.error;
-        }
+    const postHook = await this.resolveHook(ctx, tool.postHook?.binding);
+    if (postHook) {
+      const postHookResult = await postHook(hookContext);
+      if (postHookResult) {
+        hookContext.result = postHookResult.result;
+        hookContext.args = postHookResult.args;
+        hookContext.error = postHookResult.error;
       }
-    } catch (postHookError) {
-      // Log post-hook failure but don't throw - preserve original result/error
-      this.logger.error(
-        `Post-hook failed for MCP tool '${tool.name}':`,
-        postHookError,
-      );
     }
   }
 
@@ -362,5 +353,16 @@ export class McpToolRegistry {
     }
 
     return result;
+  }
+
+  private errorToCallToolResult(error: Error): CallToolResult {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: error.message || 'MCP tool execution failed',
+        },
+      ],
+    } as CallToolResult;
   }
 }

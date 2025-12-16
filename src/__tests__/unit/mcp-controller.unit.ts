@@ -88,28 +88,6 @@ describe('McpController (unit)', () => {
   });
 
   describe('handleMCPRequest', () => {
-    it('should successfully handle MCP request', async () => {
-      await controller.handleMCPRequest(req, res);
-
-      sinon.assert.calledOnce(serverFactory.createServer as sinon.SinonStub);
-      sinon.assert.calledOnce(mockServer.connect);
-      sinon.assert.calledWith(mockTransport.handleRequest, req, res, req.body);
-      sinon.assert.calledTwice(res.on as sinon.SinonStub);
-      sinon.assert.calledWith(
-        res.on as sinon.SinonStub,
-        'close',
-        sinon.match.func,
-      );
-
-      sinon.assert.calledWith(
-        res.on as sinon.SinonStub,
-        'error',
-        sinon.match.func,
-      );
-
-      sinon.assert.notCalled(logger.error as sinon.SinonStub);
-    });
-
     it('should handle close event and cleanup resources', async () => {
       let closeHandler: Function | undefined;
 

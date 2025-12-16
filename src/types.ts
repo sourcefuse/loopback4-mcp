@@ -5,9 +5,9 @@ import {
   ServerNotification,
   ServerRequest,
 } from '@modelcontextprotocol/sdk/types';
-import {ZodRawShape} from 'zod';
+import * as z from 'zod';
 import {McpHookFunction} from './interfaces';
-
+const objectSchema = z.object({});
 export type McpToolHandler = (
   ctx: Context,
   args: {[key: string]: unknown},
@@ -17,7 +17,7 @@ export type McpToolHandler = (
 export interface McpTool {
   name: string;
   description: string;
-  schema: ZodRawShape;
+  schema: z.ZodRawShape;
   handler: McpToolHandler;
 }
 
@@ -29,7 +29,7 @@ export interface McpHookConfig {
 export interface McpToolMetadata {
   name: string;
   description: string;
-  schema: ZodRawShape;
+  schema: z.ZodRawShape;
   controllerFunction: Function;
   preHook?: McpHookConfig;
   postHook?: McpHookConfig;
@@ -40,7 +40,20 @@ export interface McpToolMetadata {
 export interface McpToolDecoratorOptions {
   name: string;
   description: string;
-  schema?: ZodRawShape;
+  schema?: z.ZodRawShape;
   preHook?: McpHookConfig;
   postHook?: McpHookConfig;
+}
+export function isTextMessage(
+  message: z.infer<typeof objectSchema>,
+): message is {
+  content: Array<{type: 'text'; text: string}>;
+  isError?: boolean;
+} {
+  return (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (message as any).content[0].type === 'text' &&
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    typeof (message as any).content[0].text === 'string'
+  );
 }

@@ -1,130 +1,174 @@
-import {expect, sinon} from '@loopback/testlab';
-import {describe, it, before, after} from 'mocha';
-import http from 'http';
-import {randomUUID} from 'crypto';
-import {z} from 'zod';
-import {Server} from '@modelcontextprotocol/sdk/server/index.js';
-import {StreamableHTTPServerTransport} from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import {expect} from '@loopback/testlab';
 import {Client} from '@modelcontextprotocol/sdk/client/index.js';
 import {StreamableHTTPClientTransport} from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import * as jwt from 'jsonwebtoken';
+import {McpHookContext} from '../../interfaces';
+import {McpSchemaGeneratorService} from '../../services';
+import {McpToolRegistry} from '../../services/mcp-tool-registry.service';
+import {isTextMessage} from '../../types';
+import {TestingApplication} from '../fixtures/application';
 
-describe('Calculator Tool - Add Method (MCP Streamable HTTP)', () => {
-  let httpServer: http.Server;
-  let server: Server;
-  let transport: StreamableHTTPServerTransport;
-  let client: Client;
-  let port: number;
+const MCP_ACCESS_PERMISSION = 'mcp.access';
+const UNEXPECTED_MESSAGE_FORMAT = 'Unexpected message format';
 
-  let addSpy: sinon.SinonSpy;
+async function generateToken(permissions: string[]): Promise<string> {
+  return jwt.sign(
+    {
+      id: 'test-user',
+      permissions,
+    },
+    process.env.JWT_SECRET ?? 'test-secret',
+    {
+      issuer: process.env.JWT_ISSUER,
+      algorithm: 'HS256',
+    },
+  );
+}
+
+describe('MCP Tool – add (acceptance)', () => {
+  let app: TestingApplication;
+  let restServerUrl: string;
 
   before(async () => {
-    server = new Server(
-      {name: 'calculator-mcp-server', version: '1.0.0'},
-      {capabilities: {tools: {}}},
-    );
-
-    addSpy = sinon.spy(async (args: {a: number; b: number}) => {
-      const sum = args.a + args.b;
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `The sum of ${args.a} and ${args.b} is ${sum}`,
-          },
-        ],
-      };
-    });
-
-    server.setRequestHandler(
-      z.object({
-        method: z.literal('tools/call'),
-        params: z.object({
-          name: z.literal('calculator_add'),
-          arguments: z.object({
-            a: z.number(),
-            b: z.number(),
-          }),
-        }),
-      }),
-      async request => {
-        return addSpy(request.params.arguments);
+    app = new TestingApplication();
+    app.bind('hooks.doubleArgs').to(async ({args}: McpHookContext) => ({
+      args: {
+        a: (args.a as number) * 2,
+        b: (args.b as number) * 2,
       },
-    );
+    }));
 
-    transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: () => randomUUID(),
-    });
+    app.bind('hooks.overrideResult').to(async () => ({
+      result: {
+        content: [{type: 'text', text: 'OVERRIDDEN'}],
+      },
+    }));
+    app.service(McpSchemaGeneratorService);
 
-    await server.connect(transport);
+    await app.start();
 
-    httpServer = http.createServer((req, res) => {
-      if (req.method !== 'POST' || req.url !== '/mcp') {
-        res.statusCode = 404;
-        res.end();
-        return;
-      }
+    const registry = await app.get<McpToolRegistry>('services.McpToolRegistry');
+    await registry.initialize();
 
-      let body = '';
-      req.on('data', chunk => (body += chunk));
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      req.on('end', async () => {
-        const message = JSON.parse(body);
-
-        const response = await transport.handleRequest(req, res, message);
-
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify(response));
-      });
-    });
-
-    await new Promise<void>(resolve => {
-      httpServer.listen(0, () => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        port = (httpServer.address() as any).port;
-        resolve();
-      });
-    });
-    client = new Client(
-      {name: 'calculator-test-client', version: '1.0.0'},
-      {capabilities: {tools: {}}},
-    );
-
-    await client.connect(
-      new StreamableHTTPClientTransport(
-        new URL(`http://localhost:${port}/mcp`),
-      ),
-    );
+    restServerUrl = app.restServer.url ?? '';
   });
 
   after(async () => {
-    sinon.restore();
-    await client.close();
-    await server.close();
-    await new Promise(resolve => httpServer.close(resolve));
+    await app.stop();
   });
 
-  it('should call add method and return correct sum', async () => {
-    const result = await client.request(
+  async function createClient(token: string) {
+    const transport = new StreamableHTTPClientTransport(
+      new URL(`${restServerUrl}/mcp`),
       {
-        method: 'tools/call',
-        params: {
-          name: 'calculator_add',
-          arguments: {a: 5, b: 7},
+        requestInit: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
       },
-      z.object({
-        content: z.array(
-          z.object({
-            type: z.literal('text'),
-            text: z.string(),
-          }),
-        ),
-      }),
     );
 
-    expect(result.content[0].text).to.equal('The sum of 5 and 7 is 12');
+    const client = new Client({
+      name: 'test-client',
+      version: '1.0.0',
+    });
 
-    sinon.assert.calledOnce(addSpy);
-    sinon.assert.calledWithMatch(addSpy, {a: 5, b: 7});
+    await client.connect(transport);
+    return client;
+  }
+
+  it('invokes add tool and returns correct sum', async () => {
+    const token = await generateToken([MCP_ACCESS_PERMISSION]);
+    const client = await createClient(token);
+
+    const result = await client.callTool({
+      name: 'summary_get_add',
+      arguments: {a: 10, b: 20},
+    });
+    if (isTextMessage(result)) {
+      expect(result.content[0].text).to.equal('The sum of 10 and 20 is 30');
+    } else {
+      throw new Error(UNEXPECTED_MESSAGE_FORMAT);
+    }
+
+    await client.close();
+  });
+
+  it('denies execution for unauthorized user', async () => {
+    const token = await generateToken([]);
+    const client = await createClient(token);
+
+    const result = await client.callTool({
+      name: 'summary_get_add',
+      arguments: {a: 1, b: 2},
+    });
+    if (isTextMessage(result)) {
+      expect(result.isError).to.be.true();
+      expect(result.content[0].text).to.containEql(
+        'Access denied for MCP tool',
+      );
+    } else {
+      throw new Error(UNEXPECTED_MESSAGE_FORMAT);
+    }
+
+    await client.close();
+  });
+
+  it('denies execution when permission is different', async () => {
+    const token = await generateToken(['some.other.permission']);
+    const client = await createClient(token);
+
+    const result = await client.callTool({
+      name: 'summary_get_add',
+      arguments: {a: 1, b: 2},
+    });
+
+    if (isTextMessage(result)) {
+      expect(result.isError).to.be.true();
+      expect(result.content[0].text).to.containEql(
+        'Access denied for MCP tool',
+      );
+    } else {
+      throw new Error(UNEXPECTED_MESSAGE_FORMAT);
+    }
+
+    await client.close();
+  });
+
+  it('executes pre-hook and modifies arguments', async () => {
+    const token = await generateToken([MCP_ACCESS_PERMISSION]);
+    const client = await createClient(token);
+
+    const result = await client.callTool({
+      name: 'summary_add_with_prehook',
+      arguments: {a: 2, b: 3},
+    });
+    if (isTextMessage(result)) {
+      const response = JSON.parse(result.content[0].text);
+      expect(response.sum).to.equal(10);
+    } else {
+      throw new Error(UNEXPECTED_MESSAGE_FORMAT);
+    }
+
+    await client.close();
+  });
+
+  it('executes post-hook and overrides result', async () => {
+    const token = await generateToken([MCP_ACCESS_PERMISSION]);
+    const client = await createClient(token);
+
+    const result = await client.callTool({
+      name: 'summary_add_with_posthook',
+      arguments: {a: 1, b: 1},
+    });
+
+    if (isTextMessage(result)) {
+      expect(result.content[0].text).to.equal('OVERRIDDEN');
+    } else {
+      throw new Error(UNEXPECTED_MESSAGE_FORMAT);
+    }
+
+    await client.close();
   });
 });
