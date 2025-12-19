@@ -1,6 +1,11 @@
 import {bind, BindingScope, Context, inject, service} from '@loopback/core';
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {McpToolRegistry} from './mcp-tool-registry.service';
+import {RequestHandlerExtra} from '@modelcontextprotocol/sdk/shared/protocol';
+import {
+  ServerNotification,
+  ServerRequest,
+} from '@modelcontextprotocol/sdk/types';
 
 @bind({scope: BindingScope.REQUEST})
 export class McpServerFactory {
@@ -31,9 +36,33 @@ export class McpServerFactory {
 
     // Tool registration from singleton registry
     const toolDefinitions = this.toolRegistry.getToolDefinitions();
-    for (const tool of toolDefinitions) {
-      server.tool(tool.name, tool.description, tool.schema, (args, extras) =>
-        tool.handler(this.ctx, args, extras),
+    for (const toolDef of toolDefinitions) {
+      // Adapt the registry handler to work with the new API signature
+      // The new API expects (parameters, extra) instead of (context, args, extras)
+      const adaptedHandler = async (
+        parameters: Record<string, unknown>,
+        extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
+      ) => toolDef.handler(this.ctx, parameters, extra);
+
+      // Use the new registerTool API with type assertion to avoid deep type recursion
+      const registerTool = (
+        server as unknown as {
+          registerTool(
+            name: string,
+            config: {description: string; inputSchema: unknown},
+            handler: Function,
+          ): void;
+        }
+      ).registerTool;
+
+      registerTool.call(
+        server,
+        toolDef.name,
+        {
+          description: toolDef.description,
+          inputSchema: toolDef.schema,
+        },
+        adaptedHandler,
       );
     }
 

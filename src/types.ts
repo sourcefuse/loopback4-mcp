@@ -7,7 +7,15 @@ import {
 } from '@modelcontextprotocol/sdk/types';
 import * as z from 'zod';
 import {McpHookFunction} from './interfaces';
-const objectSchema = z.object({});
+const objectSchema = z.object({
+  content: z.array(
+    z.object({
+      type: z.literal('text'),
+      text: z.string(),
+    }),
+  ),
+  isError: z.boolean().optional(),
+});
 export type McpToolHandler = (
   ctx: Context,
   args: {[key: string]: unknown},
@@ -45,15 +53,7 @@ export interface McpToolDecoratorOptions {
   postHook?: McpHookConfig;
 }
 export function isTextMessage(
-  message: z.infer<typeof objectSchema>,
-): message is {
-  content: Array<{type: 'text'; text: string}>;
-  isError?: boolean;
-} {
-  return (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (message as any).content[0].type === 'text' &&
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    typeof (message as any).content[0].text === 'string'
-  );
+  message: unknown,
+): message is z.infer<typeof objectSchema> {
+  return objectSchema.safeParse(message).success;
 }

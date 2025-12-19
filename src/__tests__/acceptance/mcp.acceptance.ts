@@ -45,6 +45,7 @@ describe('MCP Tool – add (acceptance)', () => {
     }));
     app.service(McpSchemaGeneratorService);
 
+    await app.boot();
     await app.start();
 
     const registry = await app.get<McpToolRegistry>('services.McpToolRegistry');

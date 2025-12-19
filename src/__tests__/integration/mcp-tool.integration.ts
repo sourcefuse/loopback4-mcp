@@ -34,7 +34,7 @@ describe('McpServerFactory (integration)', () => {
   });
 
   it('registers tools on MCP server', () => {
-    const toolSpy = sinon.spy(McpServer.prototype, 'tool');
+    const toolSpy = sinon.spy(McpServer.prototype, 'registerTool');
 
     const server = factory.createServer();
     expect(server).to.be.instanceOf(McpServer);
@@ -43,8 +43,10 @@ describe('McpServerFactory (integration)', () => {
     sinon.assert.calledWithMatch(
       toolSpy,
       mockTools[0].name,
-      mockTools[0].description,
-      sinon.match(mockTools[0].schema),
+      {
+        description: mockTools[0].description,
+        inputSchema: mockTools[0].schema,
+      },
       sinon.match.func,
     );
   });
