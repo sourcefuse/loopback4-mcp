@@ -53,6 +53,3 @@ jobs:
           GH_TOKEN: ${{ secrets.RELEASE_COMMIT_GH_PAT }}
           # REMOVED: NPM_TOKEN is not needed with trusted publishing
           # The id-token: write permission above handles authentication
-
-      - name: Changelog 📝
-        run: cd src/release_notes && HUSKY=0 node release-notes.js
