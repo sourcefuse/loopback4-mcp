@@ -51,6 +51,7 @@ export class McpToolRegistry {
     const processedTools: McpToolMetadata[] = [];
     const prototype = targetClass.prototype;
 
+    // Retrieve all tool metadata that was stored earlier by @mcpTool decorator
     const allTools = MetadataInspector.getAllMethodMetadata<McpToolMetadata>(
       MCP_TOOL_METADATA_KEY,
       prototype,
@@ -116,6 +117,7 @@ export class McpToolRegistry {
         return [];
       }
 
+      // extracts all methods decroated with @mcpTool
       const tools = this.getMcpToolsFromClass(controllerClass);
 
       if (tools.length === 0) return [];

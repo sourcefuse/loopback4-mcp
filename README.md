@@ -28,7 +28,9 @@
 This extension provides a plug-and-play integration between LoopBack4 applications and the Model Context Protocol (MCP) specification.
 
 Its purpose is to enable LoopBack APIs, services, and business logic to be exposed as MCP Tools, allowing external MCP clients (such as LLMs, agents, or MCP-compatible apps) to discover and execute server-defined operations.
+
 ### Key Features
+
 - Automatic MCP Tool Discovery :-
   The extension scans your application at boot time and automatically registers all methods decorated with the custom @mcpTool() decorator.
 
@@ -38,16 +40,35 @@ Its purpose is to enable LoopBack APIs, services, and business logic to be expos
   A dedicated `McpToolRegistry` service maintains all discovered tool metadata,their handlers and execution context.
 
   A `McpToolRegistryBootObserver` ensures that registration happens only after the application has fully booted.
+
 ## Installation
+
 ```sh
 npm install loopback4-mcp
 ```
-Then register the component inside your `application.ts`.
+
+## Basic Usage
+
+Configure and load `McpComponent` in the application constructor
+as shown below.
+
 ```ts
-this.component(McpComponent);
+import {McpComponent} from 'loopback4-mcp';
+
+export class MyApplication extends BootMixin(
+  ServiceMixin(RepositoryMixin(RestApplication)),
+) {
+  constructor(options: ApplicationConfig = {}) {
+    super();
+    this.component(McpComponent);
+  }
+}
 ```
-## Usage
+
 Add the `@mcpTool()` decorator to any controller in your application.
+
+All MCP tool methods must use LoopBack `@param` decorators to define their input parameters.If `@param` decorators are missing, the MCP tool will fail.
+
 ```ts
 @mcpTool({
   name: 'create-user',
@@ -57,8 +78,11 @@ Add the `@mcpTool()` decorator to any controller in your application.
     name: z.string(),
   },
 })
-async createUser(args: {email: string; name: string}) {
-  return {message: `User ${args.name} created`};
+async createUser(
+  @param.query.string('email') email: string,
+  @param.query.string('name') name: string,
+) {
+  return {message: `User ${name} created`};
 }
 ```
 
@@ -66,38 +90,46 @@ This decorator accepts a total of five fields, out of which `name` and `descript
 
 The schema field allows defining a Zod-based validation schema for tool input parameters, while preHook and postHook enable execution of custom logic before and after the tool handler runs.
 
-### Mcp Hook Usage Details
-  To use hooks with MCP tools, follow the provider-based approach:
+## Mcp Hook Usage Details
 
-  Step 1: Create a hook provider:
-  ```ts
-  // src/providers/my-hook.provider.ts
-  export class MyHookProvider implements Provider<McpHookFunction> {
-    constructor(@inject(LOGGER.LOGGER_INJECT) private logger: ILogger) {}
-    value(): McpHookFunction {
-      return async (context: McpHookContext) => {
-        this.logger.info(`Hook executed for tool: ${context.toolName}`);
-      };
-    }
- }
-  ```
-  Step 2: Add binding key to McpHookBindings:
-  ```ts
-  // src/keys.ts
-  export namespace McpHookBindings {
-    export const MY_HOOK = BindingKey.create<McpHookFunction>('hooks.mcp.myHook');
+To use hooks with MCP tools, follow the provider-based approach:
+
+Step 1: Create a hook provider:
+
+```ts
+// src/providers/my-hook.provider.ts
+export class MyHookProvider implements Provider<McpHookFunction> {
+  constructor(@inject(LOGGER.LOGGER_INJECT) private logger: ILogger) {}
+  value(): McpHookFunction {
+    return async (context: McpHookContext) => {
+      this.logger.info(`Hook executed for tool: ${context.toolName}`);
+    };
   }
-  ```
-  Step 3: Bind provider in `application.ts`:
-  ```typescript
-  this.bind(McpHookBindings.MY_HOOK).toProvider(MyHookProvider);
- ```
-  Step 4: Use in decorator:
-  ```ts
-  @mcpTool({
-   name: 'my-tool',
-   description: 'my-description'
-   preHookBinding: McpHookBindings.MY_HOOK,
-    postHookBinding: 'hooks.mcp.myOtherHook' // or string binding key
-  })
-  ```
+}
+```
+
+Step 2: Add binding key to McpHookBindings:
+
+```ts
+// src/keys.ts
+export namespace McpHookBindings {
+  export const MY_HOOK = BindingKey.create<McpHookFunction>('hooks.mcp.myHook');
+}
+```
+
+Step 3: Bind provider in `application.ts`:
+
+```typescript
+this.bind(McpHookBindings.MY_HOOK).toProvider(MyHookProvider);
+```
+
+Step 4: Use in decorator:
+
+```ts
+@mcpTool({
+ name: 'my-tool',
+ description: 'my-description'
+ preHookBinding: McpHookBindings.MY_HOOK,
+  postHookBinding: 'hooks.mcp.myOtherHook' // or string binding key
+})
+```
