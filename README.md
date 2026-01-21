@@ -129,7 +129,7 @@ Step 4: Use in decorator:
 @mcpTool({
  name: 'my-tool',
  description: 'my-description'
- preHookBinding: McpHookBindings.MY_HOOK,
-  postHookBinding: 'hooks.mcp.myOtherHook' // or string binding key
+ preHook: {binding: McpHookBindings.MY_HOOK},
+ postHook: {binding: 'hooks.mcp.myOtherHook'}
 })
 ```
