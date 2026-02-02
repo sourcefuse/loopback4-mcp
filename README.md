@@ -29,6 +29,8 @@ This extension provides a plug-and-play integration between LoopBack4 applicatio
 
 Its purpose is to enable LoopBack APIs, services, and business logic to be exposed as MCP Tools, allowing external MCP clients (such as LLMs, agents, or MCP-compatible apps) to discover and execute server-defined operations.
 
+At present, MCP tool exposure is limited to GET-style endpoints. Support for additional HTTP methods is planned for future iterations.
+
 ### Key Features
 
 - Automatic MCP Tool Discovery :-
@@ -78,6 +80,7 @@ All MCP tool methods must use LoopBack `@param` decorators to define their input
     name: z.string(),
   },
 })
+@get('/create-user')
 async createUser(
   @param.query.string('email') email: string,
   @param.query.string('name') name: string,
@@ -127,9 +130,9 @@ Step 4: Use in decorator:
 
 ```ts
 @mcpTool({
- name: 'my-tool',
- description: 'my-description'
- preHookBinding: McpHookBindings.MY_HOOK,
-  postHookBinding: 'hooks.mcp.myOtherHook' // or string binding key
+  name: 'my-tool',
+  description: 'my-description'
+  preHook: {binding: McpHookBindings.MY_HOOK},
+  postHook: {binding: 'hooks.mcp.myOtherHook'} // or string binding key
 })
 ```
