@@ -50,8 +50,8 @@
     "@loopback/core": "^7.0.3"
   },
   "dependencies": {
-    "@loopback/rest": "^15.0.11",
-    "@modelcontextprotocol/sdk": "^1.28.0",
+    "@loopback/rest": "^15.0.12",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@sourceloop/core": "^20.0.6",
     "tslib": "^2.8.1",
     "zod": "^4.3.6"
@@ -59,10 +59,10 @@
   "devDependencies": {
     "@commitlint/cli": "^20.5.0",
     "@commitlint/config-conventional": "^20.5.0",
-    "@loopback/build": "^12.0.10",
-    "@loopback/core": "^7.0.10",
+    "@loopback/build": "^12.0.11",
+    "@loopback/core": "^7.0.11",
     "@loopback/eslint-config": "^16.0.1",
-    "@loopback/testlab": "^8.0.10",
+    "@loopback/testlab": "^8.0.11",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/git": "^10.0.1",
@@ -72,12 +72,12 @@
     "@types/node": "^16.18.126",
     "commitizen": "^4.3.1",
     "cz-conventional-changelog": "^3.3.0",
-    "cz-customizable": "^7.5.1",
+    "cz-customizable": "^7.5.4",
     "cz-customizable-ghooks": "^2.0.0",
     "eslint": "^8.57.1",
     "husky": "^9.1.7",
     "loopback4-authentication": "^13.0.4",
-    "loopback4-authorization": "^8.1.3",
+    "loopback4-authorization": "^8.1.4",
     "semantic-release": "^25.0.3",
     "source-map-support": "^0.5.21",
     "typescript": "~5.8.2"
@@ -85,7 +85,7 @@
   "overrides": {
     "jws": "3.2.3",
     "node-forge": "1.4.0",
-    "qs": "6.14.1",
+    "qs": "6.14.2",
     "underscore": "1.13.8",
     "undici": "6.24.0",
     "axios": "1.15.0"
