@@ -14,7 +14,7 @@ describe('McpServerFactory (integration)', () => {
     {
       name: 'testTool',
       description: 'Test tool',
-      schema: z.object({}),
+      schema: {},
       handler: sinon.stub(),
     },
   ];
