@@ -3,7 +3,6 @@ import {expect, sinon} from '@loopback/testlab';
 import {McpServerFactory} from '../../services/mcp-server-factory.service';
 import {McpToolRegistry} from '../../services/mcp-tool-registry.service';
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
-import {z} from 'zod';
 
 // Test constants to avoid magic numbers
 const TEST_NUMBER_1 = 1;
