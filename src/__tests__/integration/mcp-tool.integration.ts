@@ -3,6 +3,7 @@ import {expect, sinon} from '@loopback/testlab';
 import {McpServerFactory} from '../../services/mcp-server-factory.service';
 import {McpToolRegistry} from '../../services/mcp-tool-registry.service';
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
+import {z} from 'zod';
 
 describe('McpServerFactory (integration)', () => {
   let ctx: Context;
@@ -13,7 +14,7 @@ describe('McpServerFactory (integration)', () => {
     {
       name: 'testTool',
       description: 'Test tool',
-      schema: {type: 'object', properties: {}},
+      schema: z.object({}),
       handler: sinon.stub(),
     },
   ];
