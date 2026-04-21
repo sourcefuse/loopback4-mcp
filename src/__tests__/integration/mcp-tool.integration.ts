@@ -5,6 +5,12 @@ import {McpToolRegistry} from '../../services/mcp-tool-registry.service';
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {z} from 'zod';
 
+// Test constants to avoid magic numbers
+const TEST_NUMBER_1 = 1;
+const TEST_NUMBER_2 = 2;
+const TEST_NUMBER_3 = 3;
+const TEST_NUMBERS = [TEST_NUMBER_1, TEST_NUMBER_2, TEST_NUMBER_3];
+
 describe('McpServerFactory (integration)', () => {
   let ctx: Context;
   let toolRegistry: McpToolRegistry;
@@ -151,7 +157,7 @@ describe('McpServerFactory (integration)', () => {
 
       const arrayParams: Record<string, unknown> = {
         items: ['item1', 'item2', 'item3'],
-        numbers: [1, 2, 3],
+        numbers: TEST_NUMBERS,
       };
 
       for (const [key, value] of Object.entries(arrayParams)) {

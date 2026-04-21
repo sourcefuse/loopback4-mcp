@@ -45,19 +45,19 @@ export class McpServerFactory {
         // Handle common double-wrapping patterns
         const cleanedParameters: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(parameters)) {
-          if (value && typeof value === 'object') {
-            const valueObj = value as Record<string, unknown>;
-
-            // Pattern: Parameter value wrapped in object with same key
-            // e.g., "currency": {"currency": {...actual data...}}
-            if (key in valueObj && Object.keys(valueObj).length === 1) {
-              cleanedParameters[key] = valueObj[key];
-            } else {
-              cleanedParameters[key] = value;
-            }
-          } else {
+          // Skip non-objects and null/undefined values
+          if (!value || typeof value !== 'object') {
             cleanedParameters[key] = value;
+            continue;
           }
+
+          const valueObj = value as Record<string, unknown>;
+          // Pattern: Parameter value wrapped in object with same key
+          // e.g., "currency": {"currency": {...actual data...}}
+          cleanedParameters[key] =
+            key in valueObj && Object.keys(valueObj).length === 1
+              ? valueObj[key]
+              : value;
         }
 
         const result = await toolDef.handler(
