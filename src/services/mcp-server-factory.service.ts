@@ -38,11 +38,35 @@ export class McpServerFactory {
     const toolDefinitions = this.toolRegistry.getToolDefinitions();
     for (const toolDef of toolDefinitions) {
       // Adapt the registry handler to work with the new API signature
-      // The new API expects (parameters, extra) instead of (context, args, extras)
       const adaptedHandler = async (
         parameters: Record<string, unknown>,
         extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
-      ) => toolDef.handler(this.ctx, parameters, extra);
+      ) => {
+        // Handle common double-wrapping patterns
+        const cleanedParameters: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(parameters)) {
+          // Skip non-objects and null/undefined values
+          if (!value || typeof value !== 'object') {
+            cleanedParameters[key] = value;
+            continue;
+          }
+
+          const valueObj = value as Record<string, unknown>;
+          // Pattern: Parameter value wrapped in object with same key
+          // e.g., "currency": {"currency": {...actual data...}}
+          cleanedParameters[key] =
+            key in valueObj && Object.keys(valueObj).length === 1
+              ? valueObj[key]
+              : value;
+        }
+
+        const result = await toolDef.handler(
+          this.ctx,
+          cleanedParameters,
+          extra,
+        );
+        return result;
+      };
 
       // Use the new registerTool API with type assertion to avoid deep type recursion
       const registerTool = (
