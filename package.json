@@ -1,6 +1,6 @@
 {
   "name": "loopback4-mcp",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "private": false,
   "description": "A loopback extension that exposes API to MCP Tools.",
   "keywords": [
