@@ -39,7 +39,7 @@ jobs:
           CONFIG_EMAIL: ${{ vars.RELEASE_COMMIT_EMAIL }}
 
       - name: Install 📌
-        run: npm install --ignore-scripts
+        run: npm ci --ignore-scripts
 
       - name: Test 🔧
         run: npm run test
@@ -48,7 +48,7 @@ jobs:
       - name: Semantic Publish to NPM 🚀
         run: |
           npm config set provenance true
-          HUSKY=0 npx semantic-release
+          HUSKY=0 npx semantic-release@25.0.5
         env:
           GH_TOKEN: ${{ secrets.RELEASE_COMMIT_GH_PAT }}
           # REMOVED: NPM_TOKEN is not needed with trusted publishing
