@@ -85,12 +85,45 @@
   "overrides": {
     "jws": "^3.2.3",
     "node-forge": "^1.4.3",
-    "postman-request": "2.88.1-postman.49",
+    "postman-request": {
+      ".": "2.88.1-postman.49",
+      "uuid": "^11.1.1"
+    },
     "qs": "^6.14.2",
     "underscore": "^1.13.8",
     "undici": "^6.28.0",
     "axios": "^1.16.0",
-    "form-data": "^4.0.6"
+    "form-data": "^4.0.6",
+    "casbin": {
+      "csv-parse": "^7.0.2",
+      "minimatch": "^11.0.1"
+    },
+    "@loopback/build": {
+      "glob": "^14.0.2"
+    },
+    "@loopback/boot": {
+      "glob": "^14.0.2"
+    },
+    "test-exclude": {
+      "glob": "^14.0.2",
+      "minimatch": "^11.0.1"
+    },
+    "loopback-datasource-juggler": {
+      "minimatch": "^11.0.1"
+    },
+    "@sourceloop/core": {
+      "glob": "^14.0.2",
+      "minimatch": "^11.0.1"
+    },
+    "hyperid": {
+      "uuid": "^11.1.1"
+    },
+    "node-jose": {
+      "uuid": "^11.1.1"
+    },
+    "swagger-stats-sf": {
+      "uuid": "^11.1.1"
+    }
   },
   "config": {
     "commitizen": {
